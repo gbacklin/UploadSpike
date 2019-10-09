@@ -41,26 +41,25 @@ class ImageUploadViewController: UIViewController, UINavigationControllerDelegat
     }
 
     @IBAction func downloadButtonTapped(sender: AnyObject) {
-        downloadImage(name: "image.jpeg")
+        downloadImage(url: "http://www.ehmz.org/rest/uploads/image.jpeg")
     }
     
     // MARK: - Download methods
     
-    func downloadImage(name: String) {
-        let url = URL(string: "http://www.ehmz.org/rest/uploads/\(name)")!
-        
+    func downloadImage(url: String) {
+        let downloadTaskURL = URL(string: url)
         let configuration = URLSessionConfiguration.default
         let session = URLSession(configuration: configuration, delegate: self, delegateQueue: OperationQueue.main)
         
         self.statusTextView.text = ""
         
-        let task = session.downloadTask(with: url)
+        let task = session.downloadTask(with: downloadTaskURL!)
         task.resume()
     }
 
     // MARK: - Upload methods
     
-    func uploadImage(name: String) {
+    func uploadImage(url: String) {
         let imageData = myImageView.image!.jpegData(compressionQuality: 1)
 
         if(imageData == nil ) { return }
@@ -68,8 +67,8 @@ class ImageUploadViewController: UIViewController, UINavigationControllerDelegat
         self.uploadButton.isEnabled = false
         self.statusTextView.text = ""
         
-        let uploadScriptUrl = NSURL(string:"http://www.ehmz.org/rest/upload.php?name=images.jpeg")
-        let request = NSMutableURLRequest(url: uploadScriptUrl! as URL)
+        let uploadScriptUrl = URL(string: url)
+        let request = NSMutableURLRequest(url: uploadScriptUrl!)
         request.httpMethod = "POST"
         request.setValue("Keep-Alive", forHTTPHeaderField: "Connection")
         request.setValue("multipart/form-data;", forHTTPHeaderField: "Content-Type")
@@ -95,8 +94,8 @@ class ImageUploadViewController: UIViewController, UINavigationControllerDelegat
         task.resume()
     }
     
-    func uploadImage(name: String, ok: String) {
-        let url = NSURL(string:"http://www.ehmz.org/rest/upload.php")
+    func uploadImage(name: String, ok: String, url: String) {
+        let url = NSURL(string:url)
         let request = NSMutableURLRequest(url: url! as URL)
         let boundary = "Boundary-\(UUID().uuidString)"
         let mimetype = "image/jpeg"
@@ -145,7 +144,7 @@ let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
         myImageView.backgroundColor = UIColor.clear
         self.dismiss(animated: true, completion: nil)
         
-        uploadImage(name: "image.jpeg")
+        uploadImage(url: "http://www.ehmz.org/rest/upload.php?name=images.jpeg")
     }
     
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
@@ -174,9 +173,9 @@ extension ImageUploadViewController: URLSessionDataDelegate {
 extension ImageUploadViewController: URLSessionTaskDelegate {
     
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        print("didCompleteWithError")
-        
         if error != nil {
+            print("didCompleteWithError")
+
             let alert = UIAlertController(title: "Alert", message: error?.localizedDescription, preferredStyle: .alert)
             let cancelAction = UIAlertAction(title: "Ok", style: .cancel) {[weak self] (action) in
                 print("Cancel tapped")
