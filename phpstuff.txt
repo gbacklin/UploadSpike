@@ -1,0 +1,97 @@
+<?php
+
+$fp = fopen("uploads/image.png", "a");
+$run = fwrite($fp, file_get_contents("php://input"));
+fclose($fp);
+
+?>
+
+----------
+<?php
+$target_dir = "uploads/";
+$target_file = $target_dir . basename($_FILES["file"]["name"]);
+$uploadOk = 1;
+$imageFileType = strtolower(pathinfo($target_file,PATHINFO_EXTENSION));
+// Check if image file is a actual image or fake image
+if(isset($_POST["submit"])) {
+    $check = getimagesize($_FILES["file"]["tmp_name"]);
+    if($check !== false) {
+        echo "File is an image - " . $check["mime"] . ".";
+        $uploadOk = 1;
+    } else {
+        echo "File is not an image.";
+        $uploadOk = 0;
+    }
+}
+// Check if file already exists
+if (file_exists($target_file)) {
+    echo "Sorry, file already exists.";
+    $uploadOk = 0;
+}
+// Check file size
+if ($_FILES["file"]["size"] > 500000) {
+    echo "Sorry, your file is too large.";
+    $uploadOk = 0;
+}
+// Allow certain file formats
+if($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg"
+&& $imageFileType != "gif" ) {
+    echo "Sorry, only JPG, JPEG, PNG & GIF files are allowed.";
+    $uploadOk = 0;
+}
+// Check if $uploadOk is set to 0 by an error
+if ($uploadOk == 0) {
+    echo "Sorry, your file was not uploaded.";
+// if everything is ok, try to upload file
+} else {
+    if (move_uploaded_file($_FILES["file"]["tmp_name"], $target_file)) {
+        echo "The file ". basename( $_FILES["file"]["name"]). " has been uploaded.";
+    } else {
+        echo "Sorry, there was an error uploading your file.";
+    }
+}
+?>
+--------------------
+// 1. config
+NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
+
+// 2. if necessary set your Authorization HTTP (example api)
+// [config setHTTPAdditionalHeaders:@{@"<setYourKey>":<value>}];
+
+// 3. Finally, you create the NSURLSession using the above configuration.
+NSURLSession *session = [NSURLSession sessionWithConfiguration:config];
+
+// 4. Set your Request URL (example using dropbox api)
+NSURL *url = [Dropbox uploadURLForPath:<yourFullPath>];;
+NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:url];
+
+// 5. Set your HTTPMethod POST or PUT
+[request setHTTPMethod:@"PUT"];
+
+// 6. Encapsulate your file (supposse an image)
+UIImage *image = [UIImage imageNamed:@"imageName"];
+NSData *imageData = UIImageJPEGRepresentation(image, 1.0);
+
+// 7. You could try use uploadTaskWithRequest fromData
+NSURLSessionUploadTask *taskUpload = [session uploadTaskWithRequest:request fromData:imageData completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+
+    NSHTTPURLResponse *httpResp = (NSHTTPURLResponse*) response;
+    if (!error && httpResp.statusCode == 200) {
+
+        // Uploaded
+
+    } else {
+
+       // alert for error saving / updating note
+       NSLog(@"ERROR: %@ AND HTTPREST ERROR : %ld", error, (long)httpResp.statusCode);
+      }
+}];
+
+- (NSURL*)uploadURLForPath:(NSString*)path
+{
+    NSString *urlWithParams = [NSString stringWithFormat:@"https://api-content.dropbox.com/1/files_put/sandbox/%@/%@",
+                               appFolder,
+                               [path stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];    
+    NSURL *url = [NSURL URLWithString:urlWithParams];
+    return url;
+}

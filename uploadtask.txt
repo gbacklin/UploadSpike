@@ -1,0 +1,101 @@
+My final working code so I can find it later:
+
+#import "UploadViewController.h"
+
+@interface UploadViewController ()<NSURLSessionDelegate,UINavigationControllerDelegate,UIImagePickerControllerDelegate>
+@property (weak, nonatomic) IBOutlet UIImageView *imageView;
+
+@end
+
+@implementation UploadViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    // Do any additional setup after loading the view.
+}
+
+
+- (IBAction)uploadData:(id)sender {
+    const NSString *boundaryConstant = @"----------V2ymHFg03ehbqgZCaKO6jy";
+    const NSString *fileParamConstant = @"image";
+
+    NSURLSession *session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration] delegate:self delegateQueue:nil];
+
+    NSURL* requestURL = [NSURL URLWithString:@"http://d7e79f94.ngrok.io/my-site/multipart.php"];
+
+
+    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] initWithURL:requestURL];
+    [request setHTTPMethod:@"POST"];
+
+    NSString *contentType = [NSString stringWithFormat:@"multipart/form-data; boundary=%@", boundaryConstant];
+    [request setValue:contentType forHTTPHeaderField:@"Content-Type"];
+
+    NSMutableData *body = [NSMutableData data];
+
+
+    NSData *imageData = UIImageJPEGRepresentation(self.imageView.image,0.9);
+
+    //    NSLog(@"image data added %lu",self.imageView.image.size);
+
+    if (imageData) {
+        [body appendData:[[NSString stringWithFormat:@"--%@\r\n", boundaryConstant] dataUsingEncoding:NSUTF8StringEncoding]];
+        [body appendData:[[NSString stringWithFormat:@"Content-Disposition: form-data; name=\"%@\"; filename=\"%@\"\r\n", fileParamConstant, @"image.jpg"] dataUsingEncoding:NSUTF8StringEncoding]];
+        [body appendData:[@"Content-Type: image/jpeg\r\n\r\n" dataUsingEncoding:NSUTF8StringEncoding]];
+
+        [body appendData:imageData];
+        [body appendData:[[NSString stringWithFormat:@"\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
+    }
+
+    [body appendData:[[NSString stringWithFormat:@"--%@--\r\n", boundaryConstant] dataUsingEncoding:NSUTF8StringEncoding]];
+
+    NSString *postLength = [NSString stringWithFormat:@"%zu", [body length]];
+    [request setValue:postLength forHTTPHeaderField:@"Content-Length"];
+
+    [request setHTTPBody:body];
+    [request addValue:@"Test" forHTTPHeaderField:@"name"];
+
+    [request addValue:@"Test2" forHTTPHeaderField:@"data"];
+
+    NSURLSessionUploadTask *uploadTask = [session uploadTaskWithRequest:request fromData:body completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        NSLog(@"STRING %@", [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
+        NSLog(@"%@", response);
+        NSLog(@"%@", error);
+    }];
+    [uploadTask resume];
+}
+
+
+
+- (IBAction)pickImage:(id)sender {
+
+    UIImagePickerController *pickerController = [[UIImagePickerController alloc]
+                                                 init];
+    pickerController.delegate = self;
+    [self presentViewController:pickerController animated:YES completion:nil];
+}
+
+
+- (void) imagePickerController:(UIImagePickerController *)picker
+         didFinishPickingImage:(UIImage *)image
+                   editingInfo:(NSDictionary *)editingInfo
+{
+    self.imageView.image = image;
+    [self dismissViewControllerAnimated:NO completion:nil];
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+
+/*
+ #pragma mark - Navigation
+
+ // In a storyboard-based application, you will often want to do a little preparation before navigation
+ - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
+ // Get the new view controller using [segue destinationViewController].
+ // Pass the selected object to the new view controller.
+ }
+ */
+
+@end
