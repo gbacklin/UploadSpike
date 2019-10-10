@@ -51,7 +51,7 @@ class ImageUploadViewController: UIViewController, UINavigationControllerDelegat
         let configuration = URLSessionConfiguration.default
         let session = URLSession(configuration: configuration, delegate: self, delegateQueue: OperationQueue.main)
         
-        self.statusTextView.text = ""
+        self.statusTextView.text = "Downloading image..."
         
         let task = session.downloadTask(with: downloadTaskURL!)
         task.resume()
@@ -218,7 +218,7 @@ extension ImageUploadViewController: URLSessionDownloadDelegate {
     }
     
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-        debugPrint("Download finished: \(location)")
+        self.statusTextView.text = "Download finished: \(location)"
         let data = try! Data(contentsOf: location)
         myImageView.image = UIImage(data: data)
     }
